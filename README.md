@@ -21,4 +21,4 @@ python -m pip install -r requirements.txt
 ```
 
 ## Todos
-- [ ] `force.py` & `moment.py`: Should make `Moment` a derived class of `Force` to prevent duplicate code.
+- [ ] Create documentation
