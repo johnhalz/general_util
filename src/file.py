@@ -62,7 +62,7 @@ class File:
 
     @staticmethod
     def count_files(input_path: str):
-        return len([name for name in os.listdir('.') if os.path.isfile(name)])
+        return len([name for name in os.listdir(input_path) if os.path.isfile(name)])
 
     @staticmethod
     def remove(input_path: str):
@@ -77,27 +77,27 @@ class File:
             pure_filename, _ = File.separate_extension(filename)
             return pure_filename
 
-    # Output filename logic
-    @staticmethod
-    def output_filename(input_filename: str, output_filename: str, desired_extension: str, prefix: str = "", suffix: str = ""):
-        if input_filename == "" and output_filename == "":
-            logging.error("Unable to process output filename when 'input_filename' and 'output_filename' are empty.")
-            exit()
+    # # Output filename logic
+    # @staticmethod
+    # def output_filename(input_filename: str, output_filename: str, desired_extension: str, prefix: str = "", suffix: str = ""):
+    #     if input_filename == "" and output_filename == "":
+    #         logging.error("Unable to process output filename when 'input_filename' and 'output_filename' are empty.")
+    #         exit()
 
-        # Make sure that the extension begins with a period (.)
-        if desired_extension[0] != '.':
-            desired_extension = f".{desired_extension}"
+    #     # Make sure that the extension begins with a period (.)
+    #     if desired_extension[0] != '.':
+    #         desired_extension = f".{desired_extension}"
 
-        if output_filename == "false":
-            output_bool = False
-            output_name = ""
-        else:
-            output_bool = True
-            if output_filename == "":
-                name_of_file = input_filename
-            else:
-                name_of_file = output_filename
+    #     if output_filename == "false":
+    #         output_bool = False
+    #         output_name = ""
+    #     else:
+    #         output_bool = True
+    #         if output_filename == "":
+    #             name_of_file = input_filename
+    #         else:
+    #             name_of_file = output_filename
 
-            output_name = f"{prefix}{File.only_filename(name_of_file, False)}{suffix}{desired_extension}"
+    #         output_name = f"{prefix}{File.only_filename(name_of_file, False)}{suffix}{desired_extension}"
 
-        return output_bool, output_name
+    #     return output_bool, output_name
