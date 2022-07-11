@@ -10,6 +10,7 @@ long_description = (this_directory / "README.md").read_text()
 
 # Add resource links
 project_urls = {
+  'Documentation': 'https://johnhal.gitlab.io/util_python',
   'Repository': 'https://gitlab.com/johnhal/util_python'
 }
 

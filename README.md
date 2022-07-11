@@ -11,3 +11,7 @@ To install these dependencies, enter this command in a terminal when inside this
 ``` bash
 python -m pip install -r requirements.txt
 ```
+
+## Todos:
+
+- [ ] Finish documentation
