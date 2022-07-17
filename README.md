@@ -1,4 +1,4 @@
-# General_Util - General Python Utility Repository
+# `general_util` - General Python Utility Repository
 
 This repository is meant to contain general tools and utilities that are reliable and can be used in many software projects.
 
