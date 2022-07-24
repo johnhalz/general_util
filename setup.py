@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = '1.0.1'
+VERSION = '1.1.0'
 DESCRIPTION = 'General utilities for python scripts.'
 
 # Read the contents of README file
@@ -11,7 +11,7 @@ long_description = (this_directory / "README.md").read_text()
 # Add resource links
 project_urls = {
   'Documentation': 'https://johnhal.gitlab.io/util_python',
-  'Repository': 'https://gitlab.com/johnhal/util_python'
+  'Repository': 'https://github.com/johnhalz/general_util'
 }
 
 # Setting up
