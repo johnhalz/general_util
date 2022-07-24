@@ -4,29 +4,38 @@ import subprocess as sp
 import time
 
 
-class SubprocessFileChooser:
-    '''A file chooser implementation that allows using
-    subprocess back-ends.
-    Normally you only need to override _gen_cmdline, executable,
-    separator and successretcode.
+class LinuxFileChooser:
+    '''FileChooser implementation for GNu/Linux. Accepts one additional
+    keyword argument, *desktop_override*, which, if set, overrides the
+    back-end that will be used. Set it to "gnome" for Zenity, to "kde"
+    for KDialog and to "yad" for YAD (Yet Another Dialog).
+    If set to None or not set, a default one will be picked based on
+    the running desktop environment and installed back-ends.
     '''
 
-    executable = ""
-    '''The name of the executable of the back-end.
-    '''
+    def __init__(self, desktop_override: str = None) -> None:
+        self.executable = ''    # The name of the executable of the back-end.
+        self.separator = '|'    # The separator used by the back-end. Override this for automatic splitting, or override _split_output.
+        self.successretcode = 0 # The return code which is returned when the user doesn't close thedialog without choosing anything, or when the app doesn't crash.
+        
+        self._process = None
 
-    separator = "|"
-    '''The separator used by the back-end. Override this for automatic
-    splitting, or override _split_output.
-    '''
+        # Determine desktop
+        self.desktop = None
+        if (str(os.environ.get("XDG_CURRENT_DESKTOP")).lower() == "kde"
+                and which("kdialog")):
+            self.desktop = "kde"
+        
+        elif (str(os.environ.get("DESKTOP_SESSION")).lower() == "trinity"
+                and which('kdialog')):
+            self.desktop = "kde"
+        
+        elif which("yad"):
+            self.desktop = "yad"
+        
+        elif which("zenity"):
+            self.desktop = "gnome"
 
-    successretcode = 0
-    '''The return code which is returned when the user doesn't close the
-    dialog without choosing anything, or when the app doesn't crash.
-    '''
-
-    def __init__(self) -> None:
-        pass
 
     @staticmethod
     def _handle_selection(selection):
@@ -35,7 +44,6 @@ class SubprocessFileChooser:
         '''
         return selection
 
-    _process = None
 
     def _run_command(self, cmd):
         self._process = sp.Popen(cmd, stdout=sp.PIPE)
@@ -50,10 +58,12 @@ class SubprocessFileChooser:
                     return self._set_and_return_selection(None)
             time.sleep(0.1)
 
+
     def _set_and_return_selection(self, value):
         self.selection = value
         self._handle_selection(value)
         return value
+
 
     def _split_output(self, out):
         '''This methods receives the output of the back-end and turns
@@ -61,29 +71,31 @@ class SubprocessFileChooser:
         '''
         return out.split(self.separator)
 
-    def _gen_cmdline(self, mode: str, path: str, filters: list, title: str, show_hidden: bool = False, multiple: bool = False, preview: bool = False):
-        '''Returns the command line of the back-end, based on the current
-        properties. You need to override this.
-        '''
-        raise NotImplementedError()
 
     def run(self, mode: str, path: str, filters: list, title: str, show_hidden: bool = False, multiple: bool = False, preview: bool = False):
-        return self._run_command(self._gen_cmdline(mode, path, filters, title, show_hidden, multiple, preview))
+        if self.desktop == 'yad':
+            command = self._gen_cmdline_yad(mode, path, filters, title, show_hidden, multiple, preview)
+        elif self.desktop == 'kde':
+            command = self._gen_cmdline_kdialog(mode, path, filters, title, show_hidden, multiple, preview)
+        elif self.desktop == 'gnome':
+            command = self._gen_cmdline_zenity(mode, path, filters, title, show_hidden, multiple, preview)
+
+        print(command)
+        return self._run_command(command)
 
 
-class ZenityFileChooser(SubprocessFileChooser):
-    '''A FileChooser implementation using Zenity (on GNU/Linux).
+    def _gen_cmdline_zenity(self, mode: str, path: str, filters: list, title: str, show_hidden: bool = False, multiple: bool = False, preview: bool = False):
+        '''A FileChooser implementation using Zenity (on GNU/Linux).
 
-    Not implemented features:
-    * show_hidden
-    * preview
-    '''
+        Not implemented features:
+        * show_hidden
+        * preview
+        '''
 
-    executable = "zenity"
-    separator = "|"
-    successretcode = 0
+        self.executable = "zenity"
+        self.separator = "|"
+        self.successretcode = 0
 
-    def _gen_cmdline(self, mode: str, path: str, filters: list, title: str, show_hidden: bool = False, multiple: bool = False, preview: bool = False):
         cmdline = [
             which(self.executable),
             "--file-selection",
@@ -111,19 +123,11 @@ class ZenityFileChooser(SubprocessFileChooser):
         return cmdline
 
 
-class KDialogFileChooser(SubprocessFileChooser):
-    '''A FileChooser implementation using KDialog (on GNU/Linux).
+    def _gen_cmdline_kdialog(self, mode: str, path: str, filters: list, title: str, show_hidden: bool = False, multiple: bool = False, preview: bool = False):
+        self.executable = "kdialog"
+        self.separator = "\n"
+        self.successretcode = 0
 
-    Not implemented features:
-    * show_hidden
-    * preview
-    '''
-
-    executable = "kdialog"
-    separator = "\n"
-    successretcode = 0
-
-    def _gen_cmdline(self, mode: str, path: str, filters: list, title: str, show_hidden: bool = False, multiple: bool = False, preview: bool = False):
         cmdline = [which(self.executable)]
 
         filt = []
@@ -159,18 +163,11 @@ class KDialogFileChooser(SubprocessFileChooser):
         return cmdline
 
 
-class YADFileChooser(SubprocessFileChooser):
-    '''A NativeFileChooser implementation using YAD (on GNU/Linux).
+    def _gen_cmdline_yad(self, mode: str, path: str, filters: list, title: str, show_hidden: bool = False, multiple: bool = False, preview: bool = False):
+        self.executable = "yad"
+        self.separator = "|?|"
+        self.successretcode = 0
 
-    Not implemented features:
-    * show_hidden
-    '''
-
-    executable = "yad"
-    separator = "|?|"
-    successretcode = 0
-
-    def _gen_cmdline(self, mode: str, path: str, filters: list, title: str, show_hidden: bool = False, multiple: bool = False, preview: bool = False):
         cmdline = [
             which(self.executable),
             '--file-selection',
@@ -201,47 +198,3 @@ class YADFileChooser(SubprocessFileChooser):
                 ]
 
         return cmdline
-
-
-CHOOSERS = {
-    'gnome': ZenityFileChooser,
-    'kde': KDialogFileChooser,
-    'yad': YADFileChooser
-}
-
-
-class LinuxFileChooser:
-    '''FileChooser implementation for GNu/Linux. Accepts one additional
-    keyword argument, *desktop_override*, which, if set, overrides the
-    back-end that will be used. Set it to "gnome" for Zenity, to "kde"
-    for KDialog and to "yad" for YAD (Yet Another Dialog).
-    If set to None or not set, a default one will be picked based on
-    the running desktop environment and installed back-ends.
-    '''
-
-    def __init__(self, desktop_override: str = None) -> None:
-        self.desktop = None
-        if (str(os.environ.get("XDG_CURRENT_DESKTOP")).lower() == "kde"
-                and which("kdialog")):
-            self.desktop = "kde"
-        elif (str(os.environ.get("DESKTOP_SESSION")).lower() == "trinity"
-                and which('kdialog')):
-            self.desktop = "kde"
-        elif which("yad"):
-            self.desktop = "yad"
-        elif which("zenity"):
-            self.desktop = "gnome"
-
-        self.chooser = self._file_selection_dialog(desktop_override)
-
-
-    def run(self, mode: str, path: str, filters: list, title: str, show_hidden: bool, multiple: bool = False, preview: bool = False):
-        self.chooser.run(mode, path, filters, title, show_hidden, multiple, preview)
-
-
-    def _file_selection_dialog(self, desktop_override: str, **kwargs):
-        if not desktop_override:
-            desktop_override = self.desktop
-            raise OSError("No back-end available. Please install one (gnome, kde, yad).")
-        
-        return CHOOSERS[desktop_override]
