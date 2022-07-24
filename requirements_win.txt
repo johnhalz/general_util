@@ -1,4 +1,0 @@
-pathlib
-
-pywin32
-pypiwin32

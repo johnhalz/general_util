@@ -1,0 +1,6 @@
+pathlib
+
+pywin32
+pypiwin32
+
+pyobjus
